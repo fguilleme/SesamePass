@@ -55,7 +55,7 @@ final class PassportStore {
         defer { authenticating = false }
         do {
             if appLockEnabled {
-                guard try await authenticate(reason: "Accéder à vos passeports") else { return }
+                guard try await authenticate(reason: L10n.string("Accéder à vos passeports")) else { return }
             }
             guard generation == epoch else { return }
             let storage = try LocalStore()
@@ -68,7 +68,7 @@ final class PassportStore {
         } catch {
             loadFailed = true
             if let la = error as? LAError, [.userCancel, .appCancel, .systemCancel].contains(la.code) { return }
-            message = "Impossible de charger les passeports. \((error as? VaultError)?.localizedDescription ?? "Authentification indisponible ou données inaccessibles.")"
+            message = L10n.format("Impossible de charger les passeports. %@", (error as? VaultError)?.localizedDescription ?? L10n.string("Authentification indisponible ou données inaccessibles."))
         }
     }
     func setAppLockEnabled(_ enabled: Bool) async {
@@ -77,12 +77,12 @@ final class PassportStore {
         let generation = epoch
         defer { changingProtection = false }
         do {
-            guard try await authenticate(reason: enabled ? "Activer la protection de SesamePass" : "Désactiver la protection de SesamePass"), generation == epoch, unlocked else { return }
+            guard try await authenticate(reason: L10n.string(enabled ? "Activer la protection de SesamePass" : "Désactiver la protection de SesamePass")), generation == epoch, unlocked else { return }
             appLockEnabled = enabled
             UserDefaults.standard.set(enabled, forKey: "appLockEnabled")
         } catch {
             if let la = error as? LAError, [.userCancel, .appCancel, .systemCancel].contains(la.code) { return }
-            message = "Configurez Face ID, Touch ID ou un code appareil pour utiliser cette protection."
+            message = L10n.string("Configurez Face ID, Touch ID ou un code appareil pour utiliser cette protection.")
         }
     }
     private func authenticate(reason: String) async throws -> Bool {
@@ -131,10 +131,10 @@ final class PassportStore {
         schedule()
     }
     func status(_ record: PassportRecord) -> String {
-        if !backupEnabled { return "Sauvegarde iCloud désactivée" }
-        if failures.contains(record.id) { return "⚠ Sauvegarde impossible" }
-        if let ref = vault.backups[record.id], ref.account == cloudAccount, ref.uploadedRevision == record.revision { return "☁︎ Sauvegardé dans iCloud" }
-        return "☁︎ Sauvegarde en attente"
+        if !backupEnabled { return L10n.string("Sauvegarde iCloud désactivée") }
+        if failures.contains(record.id) { return L10n.string("⚠ Sauvegarde impossible") }
+        if let ref = vault.backups[record.id], ref.account == cloudAccount, ref.uploadedRevision == record.revision { return L10n.string("☁︎ Sauvegardé dans iCloud") }
+        return L10n.string("☁︎ Sauvegarde en attente")
     }
     private func commit(_ next: Vault) throws {
         guard unlocked, let local else { throw VaultError.unavailable }
@@ -158,7 +158,7 @@ final class PassportStore {
                 cloudAccount = account
                 cloudMessage = nil
                 for deletion in vault.deletions {
-                    guard deletion.account == account else { cloudMessage = "Une suppression attend le compte Apple d’origine."; continue }
+                    guard deletion.account == account else { cloudMessage = L10n.string("Une suppression attend le compte Apple d’origine."); continue }
                     try await cloud.delete(deletion)
                     try ensureActive(generation)
                     var next = vault
@@ -237,6 +237,6 @@ final class PassportStore {
     }
     private func friendly(_ error: Error) -> String {
         if let error = error as? VaultError { return error.localizedDescription }
-        return "iCloud est temporairement indisponible ou non configuré. Nouvelle tentative automatique ; vos données locales sont conservées."
+        return L10n.string("iCloud est temporairement indisponible ou non configuré. Nouvelle tentative automatique ; vos données locales sont conservées.")
     }
 }

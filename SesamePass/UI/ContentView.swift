@@ -28,8 +28,8 @@ struct ContentView: View {
                     if !store.candidates.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Label("Une sauvegarde a été trouvée", systemImage: "icloud.and.arrow.down").font(.headline)
-                            Text("\(store.candidates.count) document(s)")
-                            if let date = store.candidates.first?.date { Text("Dernière sauvegarde : \(date.formatted(date: .abbreviated, time: .shortened))").font(.caption) }
+                            Text(L10n.format(store.candidates.count == 1 ? "%d document" : "%d documents", store.candidates.count))
+                            if let date = store.candidates.first?.date { Text(L10n.format("Dernière sauvegarde : %@", date.formatted(date: .abbreviated, time: .shortened))).font(.caption) }
                             Button("Restaurer") { Task { await store.restore() } }.buttonStyle(SesamePassPrimaryButtonStyle()).disabled(store.busy)
                         }.padding(20).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
                     }
@@ -75,14 +75,14 @@ struct ContentView: View {
                         guard size <= 64 * 1024 * 1024 else { throw VaultError.invalidData }
                         importData = try Data(contentsOf: url)
                         importSheet = true
-                    } catch { store.message = "Impossible d’ouvrir cette archive chiffrée." }
+                    } catch { store.message = L10n.string("Impossible d’ouvrir cette archive chiffrée.") }
                 }
                 .sheet(isPresented: $importSheet, onDismiss: { importPassword = ""; importData = nil }) {
                     NavigationStack {
                         Form {
                             Text("L’archive est déchiffrée uniquement sur cet iPhone.")
                             SecureField("Mot de passe de l’archive", text: $importPassword)
-                            Button(importBusy ? "Déchiffrement…" : "Importer") {
+                            Button(L10n.string(importBusy ? "Déchiffrement…" : "Importer")) {
                                 guard let data = importData else { return }
                                 let password = importPassword
                                 importBusy = true
@@ -114,7 +114,7 @@ struct SettingsView: View {
                 Section {
                     Toggle("Sauvegarde iCloud", isOn: $store.backupEnabled)
                     if store.backupEnabled {
-                        Text(store.cloudAccount == nil ? "En attente d’iCloud" : "Chiffrement AES-GCM avant chaque envoi").font(.footnote)
+                        Text(L10n.string(store.cloudAccount == nil ? "En attente d’iCloud" : "Chiffrement AES-GCM avant chaque envoi")).font(.footnote)
                         if let message = store.cloudMessage { Text(message).font(.footnote).foregroundStyle(.secondary) }
                     }
                 } footer: { Text("Désactivée : aucune nouvelle communication CloudKit et aucune nouvelle clé synchronisable créée par SesamePass. Les sauvegardes et clés déjà présentes dans iCloud restent conservées.") }
@@ -124,7 +124,7 @@ struct SettingsView: View {
                 }
                 if store.pendingDeletions > 0 {
                     Section("Suppressions en attente") {
-                        Text("\(store.pendingDeletions) suppression(s) iCloud à effectuer.")
+                        Text(L10n.format(store.pendingDeletions == 1 ? "%d suppression iCloud à effectuer." : "%d suppressions iCloud à effectuer.", store.pendingDeletions))
                         Text("La sauvegarde iCloud doit être activée et le compte d’origine connecté. Ne désinstallez pas l’application avant la fin.").font(.footnote)
                     }
                 }
@@ -184,9 +184,9 @@ struct PassportDetail: View {
                     if record.checks.isEmpty { Text("Aucune vérification enregistrée") }
                     ForEach(Array(record.checks.enumerated()), id: \.offset) { _, check in
                         VStack(alignment: .leading, spacing: 5) {
-                            Label(check.name, systemImage: check.result == .passed ? "checkmark.shield" : check.result == .failed ? "exclamationmark.shield" : "questionmark.circle")
-                            Text(check.result == .passed ? "Réussie" : check.result == .failed ? "Échec" : "Non effectuée").font(.caption.weight(.semibold))
-                            Text(check.detail).font(.caption).foregroundStyle(.secondary)
+                            Label(L10n.string(check.name), systemImage: check.result == .passed ? "checkmark.shield" : check.result == .failed ? "exclamationmark.shield" : "questionmark.circle")
+                            Text(L10n.string(check.result == .passed ? "Réussie" : check.result == .failed ? "Échec" : "Non effectuée")).font(.caption.weight(.semibold))
+                            Text(L10n.string(check.detail)).font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -206,7 +206,7 @@ struct PassportDetail: View {
                     Button("Annuler", role: .cancel) { }
                     Button("Créer le PDF") {
                         do { share = SharedFile(url: try Exporter.pdf(record)) }
-                        catch { store.message = "Impossible de créer le PDF." }
+                        catch { store.message = L10n.string("Impossible de créer le PDF.") }
                     }
                 } message: { Text("Le PDF contient votre identité, votre photographie et les informations du document sans chiffrement. Toute personne disposant du fichier pourra les lire. Copie numérique — ne remplace pas un document de voyage.") }
                 .sheet(item: $share, onDismiss: { Exporter.cleanExpiredFiles() }) { file in ShareSheet(url: file.url) { share = nil } }
@@ -216,7 +216,7 @@ struct PassportDetail: View {
                             Text("Toutes les données conservées, y compris MRZ, Data Groups et SOD, seront chiffrées. Ce mot de passe sera indispensable à la restauration.")
                             SecureField("Mot de passe · 12 caractères minimum", text: $password)
                             SecureField("Confirmer le mot de passe", text: $confirmation)
-                            Button(exporting ? "Chiffrement…" : "Créer l’archive") {
+                            Button(L10n.string(exporting ? "Chiffrement…" : "Créer l’archive")) {
                                 let secret = password
                                 exporting = true
                                 Task {
@@ -230,7 +230,7 @@ struct PassportDetail: View {
                                         try? await Task.sleep(for: .milliseconds(400))
                                         guard store.unlocked else { try? FileManager.default.removeItem(at: url); return }
                                         share = SharedFile(url: url)
-                                    } catch { store.message = "Impossible de créer l’archive." }
+                                    } catch { store.message = L10n.string("Impossible de créer l’archive.") }
                                 }
                             }.disabled(exporting || password.count < 12 || password != confirmation)
                         }.navigationTitle("Archive chiffrée")
@@ -240,6 +240,6 @@ struct PassportDetail: View {
     }
     private func remove(_ record: PassportRecord, cloud: Bool) {
         do { try store.delete(record, fromCloud: cloud); dismiss() }
-        catch { store.message = "La suppression locale a échoué. Réessayez après déverrouillage." }
+        catch { store.message = L10n.string("La suppression locale a échoué. Réessayez après déverrouillage.") }
     }
 }

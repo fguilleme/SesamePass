@@ -49,13 +49,13 @@ enum VaultError: Error, LocalizedError {
     case missingKey, invalidData, keychain(Int32), unavailable, accountChanged, newerBackup, weakPassword
     var errorDescription: String? {
         switch self {
-        case .missingKey: "La clé de chiffrement est indisponible. Activez le Trousseau iCloud avec le compte Apple d’origine et réessayez. Ne réinitialisez pas vos données chiffrées."
-        case .invalidData: "Le fichier est endommagé, incompatible, ou le mot de passe est incorrect."
-        case .keychain: "Le Trousseau est indisponible. Déverrouillez l’iPhone puis réessayez."
-        case .unavailable: "iCloud est indisponible. Vos passeports restent enregistrés sur cet iPhone."
-        case .accountChanged: "Le compte iCloud a changé. La sauvegarde liée à l’ancien compte reste suspendue."
-        case .newerBackup: "Une version différente existe dans iCloud. Restaurez-la avant de modifier ce passeport."
-        case .weakPassword: "Utilisez un mot de passe d’au moins 12 caractères."
+        case .missingKey: L10n.string("La clé de chiffrement est indisponible. Activez le Trousseau iCloud avec le compte Apple d’origine et réessayez. Ne réinitialisez pas vos données chiffrées.")
+        case .invalidData: L10n.string("Le fichier est endommagé, incompatible, ou le mot de passe est incorrect.")
+        case .keychain: L10n.string("Le Trousseau est indisponible. Déverrouillez l’iPhone puis réessayez.")
+        case .unavailable: L10n.string("iCloud est indisponible. Vos passeports restent enregistrés sur cet iPhone.")
+        case .accountChanged: L10n.string("Le compte iCloud a changé. La sauvegarde liée à l’ancien compte reste suspendue.")
+        case .newerBackup: L10n.string("Une version différente existe dans iCloud. Restaurez-la avant de modifier ce passeport.")
+        case .weakPassword: L10n.string("Utilisez un mot de passe d’au moins 12 caractères.")
         }
     }
 }
@@ -63,6 +63,6 @@ enum VaultError: Error, LocalizedError {
 enum DocumentKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case passport, identityCard
     var id: String { rawValue }
-    var title: String { self == .passport ? "Passeport" : "Carte d’identité" }
+    var title: String { L10n.string(self == .passport ? "Passeport" : "Carte d’identité") }
     var symbol: String { self == .passport ? "book.closed" : "person.text.rectangle" }
 }

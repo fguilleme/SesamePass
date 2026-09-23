@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "SesamePass";
+"NSCameraUsageDescription" = "Lire les informations de la page d’identité du passeport ou du verso d’une carte d’identité, uniquement sur cet iPhone.";
+"NFCReaderUsageDescription" = "Lire les informations et la photographie de la puce d’un passeport biométrique ou d’une carte d’identité.";
+"NSFaceIDUsageDescription" = "Déverrouiller vos documents lorsque la protection de SesamePass est activée.";

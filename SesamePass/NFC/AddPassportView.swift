@@ -29,15 +29,15 @@ struct AddPassportView: View {
                     }.pickerStyle(.segmented)
                 }.disabled(reading || recognizing || camera || pendingRecord != nil)
                 Section {
-                    Label(kind == .passport ? "Lire votre passeport" : "Lire votre carte d’identité", systemImage: "wave.3.right").font(.title2.weight(.semibold))
-                    Text(kind == .passport ? "Munissez-vous de votre passeport biométrique. Les informations de sa page d’identité permettent d’ouvrir la connexion avec sa puce." : "Utilisez une carte avec puce et trois lignes de caractères au verso (format TD1). Les anciennes cartes françaises sans puce ne sont pas compatibles. La lecture dépend des protocoles de la carte ; les cartes nécessitant un CAN ou un code PIN ne sont pas prises en charge.")
+                    Label(L10n.string(kind == .passport ? "Lire votre passeport" : "Lire votre carte d’identité"), systemImage: "wave.3.right").font(.title2.weight(.semibold))
+                    Text(L10n.string(kind == .passport ? "Munissez-vous de votre passeport biométrique. Les informations de sa page d’identité permettent d’ouvrir la connexion avec sa puce." : "Utilisez une carte avec puce et trois lignes de caractères au verso (format TD1). Les anciennes cartes françaises sans puce ne sont pas compatibles. La lecture dépend des protocoles de la carte ; les cartes nécessitant un CAN ou un code PIN ne sont pas prises en charge."))
                         .foregroundStyle(.secondary)
                 }
                 if VNDocumentCameraViewController.isSupported {
                     Section {
-                        Button(recognizing ? "Lecture de la page…" : (kind == .passport ? "Scanner la page d’identité" : "Scanner le verso de la carte"), systemImage: "viewfinder") { requestCamera() }
+                        Button(L10n.string(recognizing ? "Lecture de la page…" : (kind == .passport ? "Scanner la page d’identité" : "Scanner le verso de la carte")), systemImage: "viewfinder") { requestCamera() }
                             .disabled(reading || recognizing || pendingRecord != nil)
-                        Text(kind == .passport ? "Cadrez la page d’identité et les deux lignes en bas, sans reflet. Confirmez la photo puis enregistrez le scan." : "Cadrez entièrement les trois lignes de caractères au verso de la carte, sans reflet. Confirmez la photo puis enregistrez le scan.").font(.footnote).foregroundStyle(.secondary)
+                        Text(L10n.string(kind == .passport ? "Cadrez la page d’identité et les deux lignes en bas, sans reflet. Confirmez la photo puis enregistrez le scan." : "Cadrez entièrement les trois lignes de caractères au verso de la carte, sans reflet. Confirmez la photo puis enregistrez le scan.")).font(.footnote).foregroundStyle(.secondary)
                     }
                 }
                 if let scanMessage {
@@ -60,9 +60,9 @@ struct AddPassportView: View {
                 }.disabled(reading || recognizing || pendingRecord != nil)
                 Section {
                     Label("Posez le haut de l’iPhone contre le document.", systemImage: "iphone.gen3.radiowaves.left.and.right")
-                    Text(kind == .passport ? "L’emplacement de la puce varie selon le passeport : essayez la couverture ou la page d’identité. Restez immobile jusqu’à la fin de la lecture." : "Sortez la carte de son étui, posez-la seule sur une table et maintenez le haut du dos de l’iPhone contre elle.").font(.footnote).foregroundStyle(.secondary)
+                    Text(L10n.string(kind == .passport ? "L’emplacement de la puce varie selon le passeport : essayez la couverture ou la page d’identité. Restez immobile jusqu’à la fin de la lecture." : "Sortez la carte de son étui, posez-la seule sur une table et maintenez le haut du dos de l’iPhone contre elle.")).font(.footnote).foregroundStyle(.secondary)
                     if reading { ProgressView("Lecture en cours…") }
-                    Button(pendingRecord == nil ? "Lire la puce NFC" : "Enregistrer le document", systemImage: pendingRecord == nil ? "wave.3.right" : "checkmark") {
+                    Button(L10n.string(pendingRecord == nil ? "Lire la puce NFC" : "Enregistrer le document"), systemImage: pendingRecord == nil ? "wave.3.right" : "checkmark") {
                         focused = false
                         if let pendingRecord { persist(pendingRecord) } else { startReading() }
                     }.buttonStyle(SesamePassPrimaryButtonStyle())
@@ -86,7 +86,7 @@ struct AddPassportView: View {
                     guard let data else { return }
                     recognizing = true
                     scanFailed = false
-                    scanMessage = "Analyse de la page en cours…"
+                    scanMessage = L10n.string("Analyse de la page en cours…")
                     let session = store.sessionIdentity
                     let scannedKind = kind
                     Task {
@@ -95,13 +95,13 @@ struct AddPassportView: View {
                             let recognized = try await MRZRecognition().recognize(data, kind: scannedKind)
                             guard store.unlocked, store.sessionIdentity == session else {
                                 scanFailed = true
-                                scanMessage = "La session a changé pendant le scan. Relancez le scan pour remplir les informations."
+                                scanMessage = L10n.string("La session a changé pendant le scan. Relancez le scan pour remplir les informations.")
                                 return
                             }
                             number = recognized.documentNumber
                             birth = MRZAccess.displayedDate(recognized.birthDate, birth: true)
                             expiry = MRZAccess.displayedDate(recognized.expiryDate, birth: false)
-                            scanMessage = "Page lue. Vérifiez les trois champs ci-dessous, puis touchez Lire la puce NFC. La photo seule n’ajoute pas le document."
+                            scanMessage = L10n.string("Page lue. Vérifiez les trois champs ci-dessous, puis touchez Lire la puce NFC. La photo seule n’ajoute pas le document.")
                         } catch {
                             guard store.unlocked, store.sessionIdentity == session else { return }
                             scanFailed = true
@@ -116,7 +116,7 @@ struct AddPassportView: View {
         Task {
             let allowed = await AVCaptureDevice.requestAccess(for: .video)
             if allowed { camera = true }
-            else { message = "Autorisez l’appareil photo dans les réglages iOS de SesamePass, ou saisissez les informations manuellement." }
+            else { message = L10n.string("Autorisez l’appareil photo dans les réglages iOS de SesamePass, ou saisissez les informations manuellement.") }
         }
     }
     private func startReading() {
@@ -133,7 +133,7 @@ struct AddPassportView: View {
                     pendingRecord = record
                     persist(record)
                 } catch {
-                    message = NFCReadingService.isCancellation(error) ? "Lecture annulée. Aucun document ajouté." : NFCReadingService.userMessage(error)
+                    message = NFCReadingService.isCancellation(error) ? L10n.string("Lecture annulée. Aucun document ajouté.") : NFCReadingService.userMessage(error)
                 }
             }
         } catch { message = error.localizedDescription }
@@ -146,7 +146,7 @@ struct AddPassportView: View {
             dismiss()
             saved(record.id)
         } catch {
-            message = "Le document a été lu mais n’a pas pu être enregistré. Vérifiez le code de verrouillage de l’iPhone et l’espace disponible, puis réessayez sans relire la puce."
+            message = L10n.string("Le document a été lu mais n’a pas pu être enregistré. Vérifiez le code de verrouillage de l’iPhone et l’espace disponible, puis réessayez sans relire la puce.")
         }
     }
 }

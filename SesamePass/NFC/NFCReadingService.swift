@@ -66,12 +66,14 @@ enum NFCReadingService {
     }
     static func displayMessage(_ message: NFCViewDisplayMessage) -> String? {
         switch message {
-        case .requestPresentPassport: "Posez le haut de l’iPhone contre le document et maintenez-le immobile."
-        case .authenticatingWithPassport: "Connexion sécurisée au document…\nGardez l’iPhone immobile."
+        case .requestPresentPassport: L10n.string("Posez le haut de l’iPhone contre le document et maintenez-le immobile.")
+        case .authenticatingWithPassport: L10n.string("Connexion sécurisée au document…\nGardez l’iPhone immobile.")
         case .readingDataGroupProgress(let group, let progress):
-            group == .DG2 ? "Lecture de la photographie · \(min(100, max(0, progress))) %\nGardez l’iPhone immobile." : "Lecture du document · \(min(100, max(0, progress))) %\nGardez l’iPhone immobile."
-        case .activeAuthentication: "Vérification de la puce…\nNe déplacez pas l’iPhone."
-        case .successfulRead: "Lecture terminée."
+            group == .DG2
+                ? L10n.format("Lecture de la photographie · %d %%\nGardez l’iPhone immobile.", min(100, max(0, progress)))
+                : L10n.format("Lecture du document · %d %%\nGardez l’iPhone immobile.", min(100, max(0, progress)))
+        case .activeAuthentication: L10n.string("Vérification de la puce…\nNe déplacez pas l’iPhone.")
+        case .successfulRead: L10n.string("Lecture terminée.")
         case .error(let error): userMessage(error)
         }
     }
@@ -85,21 +87,21 @@ enum NFCReadingService {
         if let nfc = error as? NFCPassportReaderError {
             switch nfc {
             case .PACEError:
-                return "La puce a été détectée, mais la connexion sécurisée PACE a échoué. Le code CAN et certaines variantes de PACE ne sont pas encore pris en charge. Les données n’ont pas été enregistrées."
+                return L10n.string("La puce a été détectée, mais la connexion sécurisée PACE a échoué. Le code CAN et certaines variantes de PACE ne sont pas encore pris en charge. Les données n’ont pas été enregistrées.")
             case .NotYetSupported:
-                return "La puce utilise une fonction non prise en charge par cette version du lecteur. Aucun document n’a été enregistré."
+                return L10n.string("La puce utilise une fonction non prise en charge par cette version du lecteur. Aucun document n’a été enregistré.")
             case .ResponseError(_, let sw1, let sw2):
-                return String(format: "La puce a répondu, mais a refusé une commande NFC (code %02X%02X). Aucun document n’a été enregistré.", Int(sw1), Int(sw2))
-            case .UserCanceled: return "Lecture annulée. Vous pouvez réessayer."
-            case .InvalidMRZKey: return "Vérifiez le numéro du document et les deux dates, puis réessayez."
-            case .TimeOutError: return "Le délai de lecture est écoulé. Placez le haut de l’iPhone contre le document et réessayez."
-            case .MoreThanOneTagFound: return "Éloignez les autres passeports et cartes, puis réessayez."
+                return L10n.format("La puce a répondu, mais a refusé une commande NFC (code %02X%02X). Aucun document n’a été enregistré.", Int(sw1), Int(sw2))
+            case .UserCanceled: return L10n.string("Lecture annulée. Vous pouvez réessayer.")
+            case .InvalidMRZKey: return L10n.string("Vérifiez le numéro du document et les deux dates, puis réessayez.")
+            case .TimeOutError: return L10n.string("Le délai de lecture est écoulé. Placez le haut de l’iPhone contre le document et réessayez.")
+            case .MoreThanOneTagFound: return L10n.string("Éloignez les autres passeports et cartes, puis réessayez.")
             case .NFCNotSupported: return NFCReadError.unavailable.localizedDescription
-            case .ConnectionError, .NoConnectedTag: return "La connexion a été interrompue. Maintenez le haut de l’iPhone contre le document."
+            case .ConnectionError, .NoConnectedTag: return L10n.string("La connexion a été interrompue. Maintenez le haut de l’iPhone contre le document.")
             default: break
             }
         }
-        return "La lecture n’a pas abouti. Vérifiez les informations saisies, retirez la coque si nécessaire et gardez l’iPhone contre le document."
+        return L10n.string("La lecture n’a pas abouti. Vérifiez les informations saisies, retirez la coque si nécessaire et gardez l’iPhone contre le document.")
     }
 }
 
@@ -107,10 +109,10 @@ enum NFCReadError: Error, LocalizedError {
     case unavailable, incomplete, documentMismatch, noChipDetected
     var errorDescription: String? {
         switch self {
-        case .noChipDetected: "Le lecteur n’a pas détecté le document avant la fin du délai. Cela ne signifie pas que la carte est dépourvue de puce. Retirez son étui et posez le haut du dos de l’iPhone contre elle, loin des autres cartes."
-        case .unavailable: "La lecture NFC nécessite un iPhone compatible. Elle n’est pas disponible sur iPad ou dans le simulateur."
-        case .incomplete: "La lecture est incomplète. Aucun document n’a été enregistré. Réessayez en gardant l’iPhone immobile."
-        case .documentMismatch: "Les données de la puce ne correspondent pas aux informations saisies. Aucun document n’a été enregistré."
+        case .noChipDetected: L10n.string("Le lecteur n’a pas détecté le document avant la fin du délai. Cela ne signifie pas que la carte est dépourvue de puce. Retirez son étui et posez le haut du dos de l’iPhone contre elle, loin des autres cartes.")
+        case .unavailable: L10n.string("La lecture NFC nécessite un iPhone compatible. Elle n’est pas disponible sur iPad ou dans le simulateur.")
+        case .incomplete: L10n.string("La lecture est incomplète. Aucun document n’a été enregistré. Réessayez en gardant l’iPhone immobile.")
+        case .documentMismatch: L10n.string("Les données de la puce ne correspondent pas aux informations saisies. Aucun document n’a été enregistré.")
         }
     }
 }

@@ -27,15 +27,15 @@ enum Exporter {
                 UIColor(red: 0.04, green: 0.11, blue: 0.18, alpha: 1).setFill()
                 context.cgContext.fill(CGRect(x: 0, y: 0, width: 595, height: 106))
                 y = 36
-                text("SESAMEPASS  /  COPIE PERSONNELLE", size: 20, color: .white, bold: true)
+                text(L10n.string("SESAMEPASS  /  COPIE PERSONNELLE"), size: 20, color: .white, bold: true)
                 y = 121
-                text("Copie numérique — ne remplace pas un document de voyage.", size: 10, bold: true)
+                text(L10n.string("Copie numérique — ne remplace pas un document de voyage."), size: 10, bold: true)
                 y = 163
             }
             func field(_ label: String, _ value: String) {
                 if y > 670 { newPage() }
                 text(label.uppercased(), size: 9, color: .gray, bold: true)
-                text(value.isEmpty ? "Non disponible" : value, size: 15, color: .black)
+                text(value.isEmpty ? L10n.string("Non disponible") : value, size: 15, color: .black)
                 y += 7
             }
             newPage()
@@ -47,22 +47,23 @@ enum Exporter {
             text(record.givenNames, size: 21, color: .black, width: 350)
             text(record.surname, size: 27, color: .black, bold: true, width: 350)
             y = max(y + 20, 335)
-            field("Type", record.kind.title)
-            field("Document", record.documentNumber)
-            field("Nationalité", record.nationality)
-            field("Date de naissance", record.birthDate)
-            field("Date d’expiration", record.expiryDate)
-            field("Lecture NFC", record.readAt.formatted(date: .long, time: .shortened))
+            field(L10n.string("Type"), record.kind.title)
+            field(L10n.string("Document"), record.documentNumber)
+            field(L10n.string("Nationalité"), record.nationality)
+            field(L10n.string("Date de naissance"), record.birthDate)
+            field(L10n.string("Date d’expiration"), record.expiryDate)
+            field(L10n.string("Lecture NFC"), record.readAt.formatted(date: .long, time: .shortened))
             newPage()
-            text("Vérifications cryptographiques", size: 23, color: .black, bold: true)
-            if record.checks.isEmpty { text("Aucune vérification enregistrée.") }
+            text(L10n.string("Vérifications cryptographiques"), size: 23, color: .black, bold: true)
+            if record.checks.isEmpty { text(L10n.string("Aucune vérification enregistrée.")) }
             for check in record.checks {
                 if y > 620 { newPage() }
-                let result = switch check.result { case .passed: "Réussie"; case .failed: "Échec"; case .notPerformed: "Non effectuée" }
-                text("\(check.name) · \(result)", size: 14, color: .black, bold: true)
-                text(check.detail)
+                let resultKey = switch check.result { case .passed: "Réussie"; case .failed: "Échec"; case .notPerformed: "Non effectuée" }
+                let result = L10n.string(resultKey)
+                text("\(L10n.string(check.name)) · \(result)", size: 14, color: .black, bold: true)
+                text(L10n.string(check.detail))
             }
-            text("Ces résultats décrivent les contrôles effectués lors de la lecture ; ils ne constituent pas une certification administrative.", size: 10)
+            text(L10n.string("Ces résultats décrivent les contrôles effectués lors de la lecture ; ils ne constituent pas une certification administrative."), size: 10)
         }
         return try write(data, extension: "pdf")
     }

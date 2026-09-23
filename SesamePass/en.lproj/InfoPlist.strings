@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "SesamePass";
+"NSCameraUsageDescription" = "Scan the identity page or the back of an identity card on this iPhone.";
+"NFCReaderUsageDescription" = "Read the information and photograph stored in a biometric passport or identity card chip.";
+"NSFaceIDUsageDescription" = "Unlock your documents when SesamePass protection is enabled.";

@@ -207,10 +207,10 @@ enum MRZError: Error, LocalizedError {
     case documentNumber, date, unreadable, checksum
     var errorDescription: String? {
         switch self {
-        case .documentNumber: "Saisissez le numéro du document, de 1 à 9 lettres ou chiffres, sans espaces."
-        case .date: "Vérifiez les dates au format JJ/MM/AAAA."
-        case .unreadable: "La zone de lecture automatique n’a pas pu être lue. Cadrez les deux lignes du passeport ou les trois lignes au verso de la carte, ou saisissez les informations."
-        case .checksum: "La lecture de la page contient une erreur. Recommencez le scan ou saisissez les informations."
+        case .documentNumber: L10n.string("Saisissez le numéro du document, de 1 à 9 lettres ou chiffres, sans espaces.")
+        case .date: L10n.string("Vérifiez les dates au format JJ/MM/AAAA.")
+        case .unreadable: L10n.string("La zone de lecture automatique n’a pas pu être lue. Cadrez les deux lignes du passeport ou les trois lignes au verso de la carte, ou saisissez les informations.")
+        case .checksum: L10n.string("La lecture de la page contient une erreur. Recommencez le scan ou saisissez les informations.")
         }
     }
 }
