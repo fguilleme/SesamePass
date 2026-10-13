@@ -5,6 +5,9 @@ import CloudKit
 
 @MainActor @Observable
 final class PassportStore {
+    #if DEBUG
+    static let screenshotRecordID = UUID(uuidString: "E119F86C-2C63-43EE-A8E8-58B48A6D0A31")!
+    #endif
     private(set) var vault = Vault()
     private(set) var unlocked = false
     private(set) var appLockEnabled: Bool
@@ -23,6 +26,7 @@ final class PassportStore {
     private var authenticating = false
     private var restoreInProgress = false
     private var local: LocalStore?
+    private let screenshotMode: Bool
     var backupEnabled: Bool {
         didSet {
             UserDefaults.standard.set(backupEnabled, forKey: "backupEnabled")
@@ -34,16 +38,28 @@ final class PassportStore {
         }
     }
     init() {
-        appLockEnabled = UserDefaults.standard.bool(forKey: "appLockEnabled")
+        #if DEBUG
+        screenshotMode = ProcessInfo.processInfo.arguments.contains("--app-store-screenshot")
+        #else
+        screenshotMode = false
+        #endif
+        appLockEnabled = screenshotMode ? false : UserDefaults.standard.bool(forKey: "appLockEnabled")
         // No CloudKit operation occurs when the explicit preference is OFF.
-        backupEnabled = UserDefaults.standard.object(forKey: "backupEnabled") as? Bool ?? true
-        Exporter.cleanExpiredFiles()
+        backupEnabled = screenshotMode ? true : (UserDefaults.standard.object(forKey: "backupEnabled") as? Bool ?? true)
+        if !screenshotMode { Exporter.cleanExpiredFiles() }
     }
     var passports: [PassportRecord] { vault.passports.sorted { $0.readAt > $1.readAt } }
     var pendingDeletions: Int { vault.deletions.count }
     var sessionIdentity: UUID { epoch }
     /// Default entry: loads protected local data without an extra application lock.
     func openIfAllowed() async {
+        #if DEBUG
+        if screenshotMode {
+            vault = Vault(passports: [Self.screenshotPassport()])
+            unlocked = true
+            return
+        }
+        #endif
         guard !appLockEnabled else { return }
         await unlock()
     }
@@ -131,11 +147,49 @@ final class PassportStore {
         schedule()
     }
     func status(_ record: PassportRecord) -> String {
+        #if DEBUG
+        if screenshotMode {
+            return Locale.preferredLanguages.first?.hasPrefix("fr") == true
+                ? "Sauvegardé dans iCloud"
+                : "Backed up to iCloud"
+        }
+        #endif
         if !backupEnabled { return L10n.string("Sauvegarde iCloud désactivée") }
         if failures.contains(record.id) { return L10n.string("⚠ Sauvegarde impossible") }
         if let ref = vault.backups[record.id], ref.account == cloudAccount, ref.uploadedRevision == record.revision { return L10n.string("☁︎ Sauvegardé dans iCloud") }
         return L10n.string("☁︎ Sauvegarde en attente")
     }
+
+    #if DEBUG
+    private static func screenshotPassport() -> PassportRecord {
+        let french = Locale.preferredLanguages.first?.hasPrefix("fr") == true
+        return PassportRecord(
+            id: screenshotRecordID,
+            revision: UUID(uuidString: "B4C9C2C9-12A0-4B4E-90E5-49581160625D")!,
+            givenNames: french ? "Pierre" : "John",
+            surname: french ? "Martin" : "Doe",
+            documentNumber: french ? "FR00P2026" : "US00P2026",
+            nationality: french ? "FRA" : "USA",
+            birthDate: french ? "14/07/1988" : "Apr 12, 1988",
+            expiryDate: french ? "31/12/2034" : "Dec 31, 2034",
+            mrz: french
+                ? "P<FRAMARTIN<<PIERRE<<<<<<<<<<<<<<<<<<<<<<<<\nFR00P2026<8FRA8807148M3412314<<<<<<<<<<<<<<02"
+                : "P<USADOE<<JOHN<<<<<<<<<<<<<<<<<<<<<<<<<<<<\nUS00P2026<8USA8804128M3412314<<<<<<<<<<<<<<02",
+            photograph: nil,
+            readAt: Date(timeIntervalSince1970: 1_788_177_600),
+            updatedAt: Date(timeIntervalSince1970: 1_788_177_600),
+            dataGroups: ["DG1": Data("SYNTHETIC-DG1".utf8), "DG2": Data("SYNTHETIC-DG2".utf8)],
+            sod: Data("SYNTHETIC-SOD".utf8),
+            checks: [
+                .init(name: "Accès sécurisé · PACE", result: .passed, detail: "Établissement de la session avec la puce. Un repli BAC peut être utilisé si PACE n’aboutit pas."),
+                .init(name: "Signature du SOD", result: .passed, detail: "Signature des données de sécurité contrôlée avec le certificat inclus dans le document."),
+                .init(name: "Intégrité des données lues", result: .passed, detail: "Comparaison des empreintes des groupes lus avec le SOD. Les groupes non lus ne sont pas vérifiés."),
+                .init(name: "Confiance dans le pays émetteur", result: .notPerformed, detail: "Aucune liste de certificats nationaux de confiance n’est embarquée. L’authenticité du pays émetteur n’est pas certifiée.")
+            ],
+            documentKind: .passport
+        )
+    }
+    #endif
     private func commit(_ next: Vault) throws {
         guard unlocked, let local else { throw VaultError.unavailable }
         try local.save(next)

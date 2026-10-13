@@ -5,13 +5,22 @@ struct ContentView: View {
     @Environment(PassportStore.self) private var store
     @State private var settings = false
     @State private var adding = false
-    @State private var path: [UUID] = []
+    @State private var path: [UUID]
     @State private var importing = false
     @State private var importData: Data?
     @State private var importPassword = ""
     @State private var importBusy = false
     @State private var importSheet = false
     private let navy = Color(red: 0.04, green: 0.11, blue: 0.18)
+
+    init() {
+        #if DEBUG
+        let detail = ProcessInfo.processInfo.arguments.contains("--app-store-screenshot-detail")
+        _path = State(initialValue: detail ? [PassportStore.screenshotRecordID] : [])
+        #else
+        _path = State(initialValue: [])
+        #endif
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
